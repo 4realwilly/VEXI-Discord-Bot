@@ -17,20 +17,22 @@ module.exports = {
 
             // ---------- Sync all real members (not bots) in batches ----------
             const members = await guild.members.fetch();
-            const membersToUpdate = members.filter(m => !m.user.bot && role && !m.roles.cache.has(autoRoleId));
+            const membersToUpdate = members.filter(
+                m => !m.user.bot && role && !m.roles.cache.has(autoRoleId)
+            );
 
             const batchSize = 10;
             const delay = 1500;
 
-            const batches = [];
-            for (let i = 0; i < membersToUpdate.size; i += batchSize) {
-                batches.push(membersToUpdate.slice(i, i + batchSize));
-            }
-
-            for (const batch of batches) {
+            const membersArray = Array.from(membersToUpdate.values());
+            for (let i = 0; i < membersArray.length; i += batchSize) {
+                const batch = membersArray.slice(i, i + batchSize);
                 await Promise.all(batch.map(m => m.roles.add(role).catch(() => null)));
                 await new Promise(res => setTimeout(res, delay));
             }
+
+            // ---------- Count real members for "Nth member" ----------
+            const realMembersCount = members.filter(m => !m.user.bot).size;
 
             // ---------- Send rich welcome embed ----------
             const channel = guild.channels.cache.get(welcomeChannelId);
@@ -43,7 +45,7 @@ module.exports = {
                         `• Make sure to read <#1471948813089378445> for the Discord rules (TOS)\n` +
                         `• Chat and hang out in <#1471948898024161501>\n` +
                         `• Need support? Visit <#1471948938624893089>\n\n` +
-                        `You are the **${guild.memberCount}th member**!`
+                        `You are the **${realMembersCount}th member**!`
                     )
                     .setColor('#8A4FFF')
                     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
