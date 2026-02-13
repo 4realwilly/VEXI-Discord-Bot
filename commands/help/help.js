@@ -49,7 +49,7 @@ module.exports = {
                 .setDescription(chunk.join('\n'))
                 .setColor('#8A4FFF')
                 .setFooter({
-                    text: interaction.guild ? `${interaction.guild.name} | ${Math.floor(i / chunkSize) + 1}/${Math.ceil(commandLines.length / chunkSize)}` : `DM | ${Math.floor(i / chunkSize) + 1}/${Math.ceil(commandLines.length / chunkSize)}`,
+                    text: interaction.guild ? `${interaction.guild.name} | ${Math.floor(i / chunkSize) + 1}/${Math.ceil(commandLines.length / chunkSize)}` : `VEXI - BOT LOBBIES | ${Math.floor(i / chunkSize) + 1}/${Math.ceil(commandLines.length / chunkSize)}`,
                     iconURL: client.user.displayAvatarURL()
                 });
 
