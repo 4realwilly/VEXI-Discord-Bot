@@ -1,21 +1,25 @@
-
 const fs = require('fs');
 const path = require('path');
 const { REST, Routes } = require('discord.js');
 const { clientId, token } = require('../config.json');
 
-module.exports = async (client) => {
+const commandHandler = async (client) => {
     const commands = [];
     const commandsPath = path.join(__dirname, '../commands');
 
     const loadFiles = (dir) => {
         const files = fs.readdirSync(dir);
+
         for (const file of files) {
             const fullPath = path.join(dir, file);
+
             if (fs.statSync(fullPath).isDirectory()) {
                 loadFiles(fullPath);
             } else if (file.endsWith('.js')) {
                 const command = require(fullPath);
+
+                if (!command.data || !command.execute) continue;
+
                 client.commands.set(command.data.name, command);
                 commands.push(command.data.toJSON());
             }
@@ -31,5 +35,8 @@ module.exports = async (client) => {
         { body: commands }
     );
 
-    console.log("Global commands registered.");
+    console.log('Global commands registered.');
 };
+
+module.exports = commandHandler;
+module.exports.startup = true; // ✅ Important
