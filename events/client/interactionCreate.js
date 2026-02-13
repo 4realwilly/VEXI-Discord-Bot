@@ -1,4 +1,3 @@
-
 const { Collection } = require('discord.js');
 const getPermissionLevel = require('../../handlers/permissionHandler');
 
@@ -12,16 +11,23 @@ module.exports = {
         const command = client.commands.get(interaction.commandName);
         if (!command) return;
 
+        /* ---------------- PERMISSION SYSTEM ---------------- */
+
         const userLevel = getPermissionLevel(interaction);
 
         if (command.permissionLevel) {
-            if (hierarchy.indexOf(userLevel) < hierarchy.indexOf(command.permissionLevel)) {
+            if (
+                hierarchy.indexOf(userLevel) <
+                hierarchy.indexOf(command.permissionLevel)
+            ) {
                 return interaction.reply({
                     content: `❌ Requires ${command.permissionLevel} level.`,
                     ephemeral: true
                 });
             }
         }
+
+        /* ---------------- COOLDOWN SYSTEM ---------------- */
 
         const cooldown = command.cooldown || 3;
 
@@ -35,20 +41,29 @@ module.exports = {
 
         if (timestamps.has(interaction.user.id)) {
             const expiration = timestamps.get(interaction.user.id) + cooldownAmount;
+
             if (now < expiration) {
                 const timeLeft = ((expiration - now) / 1000).toFixed(1);
-                return interaction.reply({ content: `Wait ${timeLeft}s.`, ephemeral: true });
+                return interaction.reply({
+                    content: `⏳ Wait ${timeLeft}s.`,
+                    ephemeral: true
+                });
             }
         }
 
         timestamps.set(interaction.user.id, now);
         setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
 
+        /* ---------------- EXECUTE ---------------- */
+
         try {
             await command.execute(interaction, client);
         } catch (error) {
             console.error(error);
-            interaction.reply({ content: "Error executing command.", ephemeral: true });
+            interaction.reply({
+                content: '⚠️ Error executing command.',
+                ephemeral: true
+            });
         }
     }
 };
