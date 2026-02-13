@@ -9,19 +9,18 @@ module.exports = {
 
         try {
             const role = guild.roles.cache.get(autoRoleId);
-            if (!role) return console.error(`Auto role not found in guild ${guild.name}`);
-
-            // ---------- Give the auto role to the joining member ----------
-            if (!member.roles.cache.has(autoRoleId)) {
+            
+            // ---------- Give the auto role only if the member is not a bot ----------
+            if (!member.user.bot && role && !member.roles.cache.has(autoRoleId)) {
                 await member.roles.add(role);
             }
 
-            // ---------- Sync all members in batches to prevent overload ----------
+            // ---------- Sync all real members (not bots) in batches ----------
             const members = await guild.members.fetch();
-            const membersToUpdate = members.filter(m => !m.user.bot && !m.roles.cache.has(autoRoleId));
+            const membersToUpdate = members.filter(m => !m.user.bot && role && !m.roles.cache.has(autoRoleId));
 
-            const batchSize = 10; // number of members to update at once
-            const delay = 1500; // 1.5s delay between batches
+            const batchSize = 10;
+            const delay = 1500;
 
             const batches = [];
             for (let i = 0; i < membersToUpdate.size; i += batchSize) {
@@ -33,12 +32,19 @@ module.exports = {
                 await new Promise(res => setTimeout(res, delay));
             }
 
-            // ---------- Send welcome embed ----------
+            // ---------- Send rich welcome embed ----------
             const channel = guild.channels.cache.get(welcomeChannelId);
             if (channel) {
                 const embed = new EmbedBuilder()
-                    .setTitle('🎉 Welcome!')
-                    .setDescription(`Welcome to **${guild.name}**, ${member.user}!`)
+                    .setTitle('🎉 Welcome to the server!')
+                    .setDescription(
+                        `Hello ${member.user}, welcome to **${guild.name}**! We’re thrilled to have you join us.\n\n` +
+                        `• Check out <#1471948805611192472> to see how our Fortnite Lobbies Bots work\n` +
+                        `• Make sure to read <#1471948813089378445> for the Discord rules (TOS)\n` +
+                        `• Chat and hang out in <#1471948898024161501>\n` +
+                        `• Need support? Visit <#1471948938624893089>\n\n` +
+                        `You are the **${guild.memberCount}th member**!`
+                    )
                     .setColor('#8A4FFF')
                     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
                     .setFooter({
