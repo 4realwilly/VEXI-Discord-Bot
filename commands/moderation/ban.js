@@ -19,17 +19,35 @@ module.exports = {
         const user = interaction.options.getUser('target');
         const member = interaction.guild.members.cache.get(user.id);
 
-        if (!member) return interaction.reply({ content: "User not found.", ephemeral: true });
-
-        // ✅ Check if bot can actually ban this member
-        if (!member.bannable) {
+        // User not found
+        if (!member) {
             return interaction.reply({
-                content: "❌ I cannot ban this user. They may have higher role or be the owner.",
-                ephemeral: true
+                content: "❌ User not found.",
+                flags: 64 // 🔹 EPHEMERAL
             });
         }
 
-        await member.ban();
-        interaction.reply(`✅ Banned ${user.tag}`);
+        // Check if bot can ban this member
+        if (!member.bannable) {
+            return interaction.reply({
+                content: "❌ I cannot ban this user. They may have higher role or be the owner.",
+                flags: 64 // 🔹 EPHEMERAL
+            });
+        }
+
+        // Attempt to ban
+        try {
+            await member.ban();
+            await interaction.reply({
+                content: `✅ Successfully banned ${user.tag}`,
+                flags: 64
+            });
+        } catch (error) {
+            console.error(error);
+            await interaction.reply({
+                content: '⚠️ An error occurred while trying to ban this user.',
+                flags: 64
+            });
+        }
     }
 };
