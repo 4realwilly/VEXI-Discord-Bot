@@ -1,9 +1,12 @@
 {
   "token": "",
   "clientId": "1471971126598172742",
+  "guildId": "1471948475926315269",
   "owners": ["1342676516353343513"],
   "adminRoles": [""],
   "modRoles": [""],
-"welcomeChannelId": "1471948821008355398",
-    "autoRoleId": "1471948746362454154"
+  "welcomeChannelId": "1471948821008355398",
+  "autoRoleId": "1471948746362454154",
+  "rulesChannelId": "1471948813089378445"
+
 }
