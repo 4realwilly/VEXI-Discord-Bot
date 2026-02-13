@@ -1,5 +1,4 @@
-
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,6 +12,8 @@ module.exports = {
 
     permissionLevel: "Mod",
     cooldown: 5,
+    userPermissions: [PermissionFlagsBits.BanMembers],
+    botPermissions: [PermissionFlagsBits.BanMembers],
 
     async execute(interaction) {
         const user = interaction.options.getUser('target');
@@ -20,7 +21,15 @@ module.exports = {
 
         if (!member) return interaction.reply({ content: "User not found.", ephemeral: true });
 
+        // ✅ Check if bot can actually ban this member
+        if (!member.bannable) {
+            return interaction.reply({
+                content: "❌ I cannot ban this user. They may have higher role or be the owner.",
+                ephemeral: true
+            });
+        }
+
         await member.ban();
-        interaction.reply(`Banned ${user.tag}`);
+        interaction.reply(`✅ Banned ${user.tag}`);
     }
 };
