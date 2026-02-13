@@ -38,7 +38,7 @@ module.exports = {
             const channel = guild.channels.cache.get(welcomeChannelId);
             if (channel) {
                 const embed = new EmbedBuilder()
-                    .setTitle('🎉 Welcome to the server!')
+                    .setTitle('Welcome to the server!')
                     .setDescription(
                         `Hello ${member.user}, welcome to **${guild.name}**! We’re thrilled to have you join us.\n\n` +
                         `• Check out <#1471948805611192472> to see how our Fortnite Lobbies Bots work\n` +
