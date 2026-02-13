@@ -28,7 +28,7 @@ module.exports = {
             .setDescription(`**WebSocket Ping:** ${wsPing}ms\n **API Ping:** ${apiPing}ms`)
             .setColor('#8A4FFF')
             .setFooter({
-                text: interaction.guild ? interaction.guild.name : 'Server',
+                text: interaction.guild ? interaction.guild.name : 'VEXI - BOT LOBBIES',
                 iconURL: client.user.displayAvatarURL()
             });
 
