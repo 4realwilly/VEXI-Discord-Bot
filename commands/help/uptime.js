@@ -30,7 +30,7 @@ module.exports = {
             .setDescription(`I have been online for **${uptimeString}**`)
             .setColor('#8A4FFF')
             .setFooter({
-                text: interaction.guild ? interaction.guild.name : 'Server',
+                text: interaction.guild ? interaction.guild.name : 'VEXI - BOT LOBBIES',
                 iconURL: client.user.displayAvatarURL()
             });
 
