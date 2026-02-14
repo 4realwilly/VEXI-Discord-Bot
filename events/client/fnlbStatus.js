@@ -7,7 +7,7 @@ module.exports = {
     async execute(client) {
 
         let failureCount = 0;
-        let intervalTime = 60000;
+        let intervalTime = 60000; // 1 minute
         let interval;
 
         const getLoadEmoji = (available, busy) => {
@@ -17,7 +17,7 @@ module.exports = {
             const load = busy / total;
 
             if (load < 0.5) return '🟢';
-            if (load < 0.8) return '🟡';
+            if (load < 0.85) return '🟡';
             return '🔴';
         };
 
@@ -51,48 +51,48 @@ module.exports = {
 
                 const data = await res.json();
 
+                // Reset failure state
                 failureCount = 0;
                 intervalTime = 60000;
 
-                const publicData = data.public || {};
-                const premiumData = data.vip || {};
+                const pub = data.public || {};
+                const vip = data.vip || {};
 
-                const publicAvailable = publicData.available || 0;
-                const publicBusy = publicData.busy || 0;
+                const pubAvailable = pub.available || 0;
+                const pubBusy = pub.busy || 0;
 
-                const premiumAvailable = premiumData.available || 0;
-                const premiumBusy = premiumData.busy || 0;
+                const vipAvailable = vip.available || 0;
+                const vipBusy = vip.busy || 0;
 
-                const publicEmoji = getLoadEmoji(publicAvailable, publicBusy);
-                const premiumEmoji = getLoadEmoji(premiumAvailable, premiumBusy);
+                const pubEmoji = getLoadEmoji(pubAvailable, pubBusy);
+                const vipEmoji = getLoadEmoji(vipAvailable, vipBusy);
 
-                const publicOnline = (publicAvailable + publicBusy) > 0;
-                const premiumOnline = (premiumAvailable + premiumBusy) > 0;
+                const pubOnline = (pubAvailable + pubBusy) > 0;
+                const vipOnline = (vipAvailable + vipBusy) > 0;
 
-                const totalLaunchAvailable =
-                    publicAvailable + premiumAvailable;
+                const totalAvailable = pubAvailable + vipAvailable;
 
                 await updateChannel(
                     guild,
                     config.publicVcId,
-                    `┊Public: ${publicOnline ? publicEmoji + ' Online' : '🔴 Offline'}`
+                    `┊Public: ${pubOnline ? pubEmoji + ' Online' : '🔴 Offline'}`
                 );
 
                 await updateChannel(
                     guild,
                     config.premiumVcId,
-                    `┊Premium: ${premiumOnline ? premiumEmoji + ' Online' : '🔴 Offline'}`
+                    `┊Premium: ${vipOnline ? vipEmoji + ' Online' : '🔴 Offline'}`
                 );
 
                 await updateChannel(
                     guild,
                     config.launchVcId,
-                    `┊Launch: ${totalLaunchAvailable}`
+                    `┊Launch: ${totalAvailable}`
                 );
 
             } catch (err) {
                 failureCount++;
-                intervalTime = Math.min(intervalTime * 2, 600000);
+                intervalTime = Math.min(intervalTime * 2, 600000); // max 10 mins
 
                 if (failureCount >= 3) {
                     await setMaintenance(guild);
