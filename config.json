@@ -7,6 +7,10 @@
   "modRoles": [""],
   "welcomeChannelId": "1471948821008355398",
   "autoRoleId": "1471948746362454154",
-  "rulesChannelId": "1471948813089378445"
+  "rulesChannelId": "1471948813089378445",
+  "publicVcId": "1471948966865277152",
+  "premiumVcId": "1471948959143559349",
+  "launchVcId": "1471948966403768391",
+  "fnlbApiKey": ""
 
 }
