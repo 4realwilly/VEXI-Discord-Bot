@@ -1,11 +1,11 @@
 const { ChannelType } = require('discord.js');
 const config = require('../../config.json');
+const fetch = require('node-fetch');
 
 module.exports = {
     name: 'clientReady',
     once: false,
     async execute(client) {
-
         let failureCount = 0;
         let intervalTime = 60000; // 1 minute
         let interval;
@@ -13,9 +13,7 @@ module.exports = {
         const getLoadEmoji = (available, busy) => {
             const total = available + busy;
             if (total === 0) return '🔴';
-
             const load = busy / total;
-
             if (load < 0.5) return '🟢';
             if (load < 0.85) return '🟡';
             return '🔴';
@@ -24,10 +22,7 @@ module.exports = {
         const updateChannel = async (guild, id, newName) => {
             const channel = guild.channels.cache.get(id);
             if (!channel || channel.type !== ChannelType.GuildVoice) return;
-
-            if (channel.name !== newName) {
-                await channel.setName(newName).catch(() => {});
-            }
+            if (channel.name !== newName) await channel.setName(newName).catch(() => {});
         };
 
         const setMaintenance = async (guild) => {
@@ -41,63 +36,71 @@ module.exports = {
             if (!guild) return;
 
             try {
-                const res = await fetch('https://api.fnlb.net/bots/stats/', {
+                // Fetch all bots
+                const botsRes = await fetch('https://api.fnlb.net/bots', {
                     headers: {
-                        'Authorization': `Bearer ${config.fnlbApiKey}`
+                        'Authorization': `Bearer ${config.fnlbApiKey}`,
+                        'Content-Type': 'application/json'
                     }
                 });
+                if (!botsRes.ok) throw new Error('Failed to fetch bots');
+                const bots = await botsRes.json();
 
-                if (!res.ok) throw new Error('API Error');
+                // Fetch categories to determine VIP vs public
+                const categoriesRes = await fetch('https://api.fnlb.net/categories', {
+                    headers: {
+                        'Authorization': `Bearer ${config.fnlbApiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!categoriesRes.ok) throw new Error('Failed to fetch categories');
+                const categories = await categoriesRes.json();
 
-                const data = await res.json();
+                // Separate VIP (premium) and public bots by category ID
+                const vipCategoryIds = categories
+                    .filter(cat => cat.name.toLowerCase().includes('vip') || cat.name.toLowerCase().includes('premium'))
+                    .map(cat => cat.id);
 
-                // Reset failure state
-                failureCount = 0;
-                intervalTime = 60000;
+                const publicBots = bots.filter(bot => !vipCategoryIds.includes(bot.parent));
+                const vipBots = bots.filter(bot => vipCategoryIds.includes(bot.parent));
 
-                const pub = data.public || {};
-                const vip = data.vip || {};
+                const pubAvailable = publicBots.length;
+                const vipAvailable = vipBots.length;
 
-                const pubAvailable = pub.available || 0;
-                const pubBusy = pub.busy || 0;
-
-                const vipAvailable = vip.available || 0;
-                const vipBusy = vip.busy || 0;
-
-                const pubEmoji = getLoadEmoji(pubAvailable, pubBusy);
-                const vipEmoji = getLoadEmoji(vipAvailable, vipBusy);
-
-                const pubOnline = (pubAvailable + pubBusy) > 0;
-                const vipOnline = (vipAvailable + vipBusy) > 0;
-
-                const totalAvailable = pubAvailable + vipAvailable;
+                // Use simple online/offline emoji (no detailed busy/connected data from /bots)
+                const pubEmoji = pubAvailable > 0 ? '🟢' : '🔴';
+                const vipEmoji = vipAvailable > 0 ? '🟢' : '🔴';
 
                 await updateChannel(
                     guild,
                     config.publicVcId,
-                    `┊Public: ${pubOnline ? pubEmoji + ' Online' : '🔴 Offline'}`
+                    `┊Public: ${pubEmoji} Online (${pubAvailable})`
                 );
 
                 await updateChannel(
                     guild,
                     config.premiumVcId,
-                    `┊Premium: ${vipOnline ? vipEmoji + ' Online' : '🔴 Offline'}`
+                    `┊Premium: ${vipEmoji} Online (${vipAvailable})`
                 );
 
                 await updateChannel(
                     guild,
                     config.launchVcId,
-                    `┊Launch: ${totalAvailable}`
+                    `┊Launch: ${pubAvailable + vipAvailable}`
                 );
 
+                failureCount = 0;
+                intervalTime = 60000; // reset interval
+
             } catch (err) {
+                console.error('Error updating bot status:', err);
                 failureCount++;
-                intervalTime = Math.min(intervalTime * 2, 600000); // max 10 mins
-
+                intervalTime = Math.min(intervalTime * 2, 600000); // exponential backoff
                 if (failureCount >= 3) {
-                    await setMaintenance(guild);
+                    const guild = client.guilds.cache.get(config.guildId);
+                    if (guild) await setMaintenance(guild);
                 }
-
+            } finally {
                 clearInterval(interval);
                 interval = setInterval(updateStatus, intervalTime);
             }
